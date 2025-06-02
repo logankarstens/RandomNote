@@ -24,7 +24,7 @@ export class Pitch {
   }
 
   static createFromValue(value: number): Pitch {
-    let step: Step = (value % 7) + 1;
+    const step: Step = (value % 7) + 1;
     return new Pitch(step, Math.floor(value / 7) - 1);
   }
 }
@@ -46,14 +46,14 @@ export class Clef {
 export class Measure {
   key: number = 0;
   clef: Clef = new Clef(Step.G, 2);
-  notes: Pitch[] = new Array();
+  notes: Pitch[] = [];
 
   addNote(note: Pitch) { this.notes.push(note) };
   serialize(index: number) {
-    let serializedNotes: string[] = new Array();
-    let includeAttributes: boolean = (true);
+    const serializedNotes: string[] = [];
+    const includeAttributes: boolean = true;
     this.notes.forEach(note => {
-      let alter = getNaturalCancelAlter(this.key, note.step);
+      const alter = getNaturalCancelAlter(this.key, note.step);
       serializedNotes.push(`
         <note>
           <pitch>
@@ -105,13 +105,13 @@ function getClefPitchThreshold (clef: Clef, maxLedgerLines: number, minOrMax: bo
    if (clefPitchMap[clef.toString()] == null)
       return null;
 
-    let basePitch: Pitch = clefPitchMap[clef.toString()];
+    const basePitch: Pitch = clefPitchMap[clef.toString()];
 
     if (minOrMax == false) {
-      let stepDifference: number = 2 * (clef.line - 1) + 2 * (maxLedgerLines);
+      const stepDifference: number = 2 * (clef.line - 1) + 2 * (maxLedgerLines);
       return Pitch.createFromValue(basePitch.getValue() - stepDifference);
     } else {
-      let stepDifference: number = 2 * (5 - clef.line) + 2 * (maxLedgerLines);
+      const stepDifference: number = 2 * (5 - clef.line) + 2 * (maxLedgerLines);
       return Pitch.createFromValue(basePitch.getValue() + stepDifference);
     }
 }

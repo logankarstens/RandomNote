@@ -1,4 +1,3 @@
-import Image from "next/image";
 import OSMD from "./components/osmd";
 
 export default function Home() {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { IOSMDOptions, OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 import { createRandomFile } from '../actions/createRandomFile';
 
@@ -21,15 +21,14 @@ export default function OSMD() {
   const [osmd, setOsmd] = useState<OpenSheetMusicDisplay | null>(null);
   const container = useRef<HTMLDivElement | null>(null)
   const [measure, setMeasure] = useState<number>(1);
-  const [fileQueue, setFileQueue] = useState<Array<string>>(new Array());
+  const [fileQueue, setFileQueue] = useState<Array<string>>([]);
 
   const [loading, setLoading] = useState<boolean>(true);
 
   //Initialization
   const init = () => {
     if (container.current != null && osmd == null) {
-      let newOsmd = new OpenSheetMusicDisplay(container.current, getOptions(measure))
-      setOsmd(newOsmd);
+      setOsmd(new OpenSheetMusicDisplay(container.current, getOptions(measure)));
     }
   }
 
@@ -48,11 +47,6 @@ export default function OSMD() {
     }
   }
 
-  //Effects
-  useEffect(init, [container.current, osmd]);
-  useEffect(fileQueueHandler, [fileQueue.length, loading]);
-  useEffect(measureHandler, [measure]);
-
   //Methods
   const getOptions = (measure: number) => {
     const result: IOSMDOptions = defaultOptions;
@@ -62,14 +56,14 @@ export default function OSMD() {
   }
 
   const loadNextFile = async(): Promise<boolean> => {
-    let newFile = await createRandomFile(measuresPerFile);
+    const newFile = await createRandomFile(measuresPerFile);
     if (newFile == null)
       return false;
-    setFileQueue(q => [...q, newFile]);
+    setFileQueue((q: Array<string>) => [...q, newFile]);
     return true;
   }
 
-  const processNextFile = () => {
+  const processNextFile = useCallback(() => {
     if (fileQueue.length == 0) {
       setLoading(true);
       return;
@@ -83,20 +77,25 @@ export default function OSMD() {
       });
 
     //Consume the current file
-    setFileQueue(q => q.slice(1));
-  }
+    setFileQueue((q: Array<string>) => q.slice(1));
+  }, [fileQueue, osmd])
 
   const renderNextMeasure = () => {
     if (measure >= measuresPerFile) {
       processNextFile();
     } else if (osmd != null) {
       //TODO: rework newmeasure logic
-      let newMeasure: number = measure + 1;
-      setMeasure(m => m+1);
+      const newMeasure: number = measure + 1;
+      setMeasure((m: number) => m+1);
       osmd.setOptions(getOptions(newMeasure));
       osmd.render();
     }
   }
+
+  //Effects
+  useEffect(init, [measure, osmd]);
+  useEffect(fileQueueHandler, [fileQueue.length, loading, measure, processNextFile]);
+  useEffect(measureHandler, [measure, processNextFile, osmd]);
 
   return <>
     <div ref={container} style={{width: '300px', height: '200px', backgroundColor: "white", opacity: loading ? "0" : "1"}} ></div>

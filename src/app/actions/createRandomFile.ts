@@ -2,8 +2,8 @@
 
 import * as Music from "../models/music";
 
-const fs = require('fs').promises;
-const path = require('path');
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export async function createRandomFile(numNotes: number): Promise<string | null>  {
   //Load template
@@ -13,7 +13,7 @@ export async function createRandomFile(numNotes: number): Promise<string | null>
   const config: Music.Config = new Music.Config();
 
   //Create & serialize measures
-  let serializedMeasures: string[] = new Array();
+  const serializedMeasures: string[] = [];
   for (let i: number = 0; i < numNotes; i++) {
     const measure = new Music.Measure();
 
@@ -23,8 +23,8 @@ export async function createRandomFile(numNotes: number): Promise<string | null>
         
     //Randomize notes
     for (let j = 0; j < 1; j++) { //TODO: config # notes/measure
-      let minPitch: Music.Pitch | null = Music.getClefMinPitch(measure.clef, config.maxLedgerLines),
-           maxPitch: Music.Pitch | null = Music.getClefMaxPitch(measure.clef, config.maxLedgerLines);
+      const minPitch: Music.Pitch | null = Music.getClefMinPitch(measure.clef, config.maxLedgerLines),
+        maxPitch: Music.Pitch | null = Music.getClefMaxPitch(measure.clef, config.maxLedgerLines);
 
       if (minPitch == null || maxPitch == null)
         return null;
