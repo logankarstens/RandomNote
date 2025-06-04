@@ -2,15 +2,15 @@
 
 import * as Music from "../models/music";
 
+import { promises as fs } from 'fs';
+import path from 'path';
+
 export async function createRandomFile(numNotes: number): Promise<string | null>  {
   //Load template
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/assets/template.xml`);
-  let result = await response.text();
+  let result = await fs.readFile(path.join(process.cwd(), 'public/assets/template.xml'), 'utf8');
 
   //Load config
   const config: Music.Config = new Music.Config();
-
-  config.allowedClefs.push(new Music.Clef(Music.Step.C, 4));
 
   //Create & serialize measures
   const serializedMeasures: string[] = [];
