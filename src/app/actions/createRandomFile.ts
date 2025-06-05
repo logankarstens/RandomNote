@@ -7,7 +7,7 @@ import path from 'path';
 
 export async function createRandomFile(numNotes: number): Promise<string | null>  {
   //Load template
-  let result = await fs.readFile(path.join(process.cwd(), 'assets', 'template.xml'), 'utf8');
+  let result = await fs.readFile(path.join(process.cwd(), 'src', 'assets', 'template.xml'), 'utf8');
 
   //Load config
   const config: Music.Config = new Music.Config();
