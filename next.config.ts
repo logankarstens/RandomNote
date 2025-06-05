@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
   },
   compiler: {
     removeConsole: false,
+  },
+  outputFileTracingIncludes: {
+    '/assets': ['./public/**/*'],
   }
 };
 
