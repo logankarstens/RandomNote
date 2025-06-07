@@ -6,13 +6,48 @@ export class Config {
   maxLedgerLines: number = 2;
 }
 
+export class Measure {
+  key: number = 0;
+  clef: Clef = new Clef(Step.G, 2);
+  notes: Pitch[] = [];
+
+  addNote(note: Pitch) {
+    note.alter = getNaturalCancelAlter(this.key, note.step);
+    this.notes.push(note);
+  };
+  
+  serialize(measureNumber: number) {
+    const includeAttributes: boolean = true;
+
+    const result =  `
+      <measure number="${measureNumber}">
+        <print new-page="yes"/>
+        ${includeAttributes ? `<attributes>
+          <divisions>1</divisions>
+          ${this.key != null ? `<key>
+            <fifths>${this.key}</fifths>
+          </key>` : ''}
+          ${this.clef != null ? `<clef>
+            <sign>${Step[this.clef?.sign]}</sign>
+            <line>${this.clef.line}</line>
+          </clef>` : ''}
+        </attributes>` : ''}
+        ${this.notes.map(note => note.serialize())}
+      </measure>
+    `;
+    return result;
+  }
+}
+
 export class Pitch {
   step: Step;
   octave: number;
+  alter: number;
 
-  constructor(step: Step, octave: number) {
+  constructor(step: Step, octave: number, alter: number = 0) {
     this.step = step;
     this.octave = octave;
+    this.alter = alter;
   }
 
   getValue(): number {
@@ -23,9 +58,40 @@ export class Pitch {
     return 12 + (this.octave * 12) + stepSemitoneMap[this.step];
   }
 
-  static createFromValue(value: number): Pitch {
+  serialize(): string {
+    return `
+      <note>
+        <pitch>
+          <step>${Step[this.step]}</step>
+          <octave>${this.octave}</octave>
+          <alter>${this.alter}</alter>
+        </pitch>
+        <duration>4</duration>
+        <type>quarter</type>
+      </note>
+    `;
+  }
+
+  static fromValue(value: number): Pitch {
     const step: Step = (value % 7) + 1;
     return new Pitch(step, Math.floor(value / 7) - 1);
+  }
+
+  static fromElement(note: Element): Pitch {
+    let stepStr: string, octave: number, alter: number = 0; 
+    let firstPitch = note.getElementsByTagName("pitch")[0];
+
+    //Step
+    stepStr = firstPitch.getElementsByTagName("step")[0].innerHTML;
+
+    //Octave
+    octave = parseInt(firstPitch.getElementsByTagName("octave")[0].innerHTML);
+
+    //Alter
+    if (firstPitch.getElementsByTagName("alter").length > 0)
+      alter = parseInt(firstPitch.getElementsByTagName("alter")[0].innerHTML);
+        
+    return new Pitch(Step[stepStr as keyof typeof Step], octave, alter);
   }
 }
 
@@ -40,50 +106,6 @@ export class Clef {
 
   toString(): string {
     return Step[this.sign] + this.line.toString();
-  }
-}
-
-export class Measure {
-  key: number = 0;
-  clef: Clef = new Clef(Step.G, 2);
-  notes: Pitch[] = [];
-
-  addNote(note: Pitch) { this.notes.push(note) };
-  serialize(index: number) {
-    const serializedNotes: string[] = [];
-    const includeAttributes: boolean = true;
-    this.notes.forEach(note => {
-      const alter = getNaturalCancelAlter(this.key, note.step);
-      serializedNotes.push(`
-        <note>
-          <pitch>
-            <step>${Step[note.step]}</step>
-            <octave>${note.octave}</octave>
-            ${alter ? `<alter>${alter}</alter>` : ''}
-          </pitch>
-          <duration>4</duration>
-          <type>quarter</type>
-        </note>
-      `);
-    });
-
-    const result =  `
-      <measure number="${index}">
-        <print new-page="yes"/>
-        ${includeAttributes ? `<attributes>
-          <divisions>1</divisions>
-          ${this.key != null ? `<key>
-            <fifths>${this.key}</fifths>
-          </key>` : ''}
-          ${this.clef != null ? `<clef>
-            <sign>${Step[this.clef?.sign]}</sign>
-            <line>${this.clef.line}</line>
-          </clef>` : ''}
-        </attributes>` : ''}
-        ${serializedNotes.join('')}
-      </measure>
-    `;
-    return result;
   }
 }
 
@@ -109,10 +131,10 @@ function getClefPitchThreshold (clef: Clef, maxLedgerLines: number, minOrMax: bo
 
     if (minOrMax == false) {
       const stepDifference: number = 2 * (clef.line - 1) + 2 * (maxLedgerLines);
-      return Pitch.createFromValue(basePitch.getValue() - stepDifference);
+      return Pitch.fromValue(basePitch.getValue() - stepDifference);
     } else {
       const stepDifference: number = 2 * (5 - clef.line) + 2 * (maxLedgerLines);
-      return Pitch.createFromValue(basePitch.getValue() + stepDifference);
+      return Pitch.fromValue(basePitch.getValue() + stepDifference);
     }
 }
 

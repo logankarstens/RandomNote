@@ -30,7 +30,7 @@ export async function createRandomFile(numNotes: number): Promise<string | null>
         return null;
 
       const pitchValue = getRandomInt(minPitch.getValue(), maxPitch.getValue());
-      const note: Music.Pitch = Music.Pitch.createFromValue(pitchValue);
+      const note: Music.Pitch = Music.Pitch.fromValue(pitchValue);
 
       measure.addNote(note);
     }

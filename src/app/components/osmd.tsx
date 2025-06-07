@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, ReactElement } from 'react';
 import { IOSMDOptions, OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 import { createRandomFile } from '../actions/createRandomFile';
+import { Pitch, Step } from '../models/music';
 
 const defaultOptions: IOSMDOptions = {
   autoResize: true,
@@ -17,11 +18,16 @@ const defaultOptions: IOSMDOptions = {
 const measuresPerFile = 1;
 const fileQueueMaxBufferSize = 1;
 
+const alterUnicodes: Array<string> = ["\u266D ", "", "\u266F"]
+
 export default function OSMD() {
   const [osmd, setOsmd] = useState<OpenSheetMusicDisplay | null>(null);
   const container = useRef<HTMLDivElement | null>(null)
   const [measure, setMeasure] = useState<number>(1);
+
   const [fileQueue, setFileQueue] = useState<Array<string>>([]);
+  const [currentFile, setCurrentFile] = useState<string | null>(null);
+  const [currentNotes, setCurrentNotes] = useState<Array<string> | null>(null);
 
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -71,7 +77,10 @@ export default function OSMD() {
 
     const file = fileQueue[0];
     setMeasure(1);
-    osmd?.load(file)?.then(() => { 
+    osmd?.load(file)?.then(() => {
+        setCurrentFile(file);
+        setCurrentNotes(null);
+
         osmd.render();
         setLoading(false);
       });
@@ -92,6 +101,23 @@ export default function OSMD() {
     }
   }
 
+  const revealCurrentNotes = () => {
+    if (currentFile == null) 
+      return;
+    
+    //Use native DOMParser to read the notes from the current file
+    let parser = new DOMParser();
+    let xmlDoc = parser.parseFromString(currentFile, "text/xml");
+    let notes: HTMLCollectionOf<Element> = xmlDoc.getElementsByTagName("note");
+
+    setCurrentNotes(
+      Array.from(notes).map(note => {
+        let pitch: Pitch = Pitch.fromElement(note);
+        return Step[pitch.step] + alterUnicodes[pitch.alter + 1]; 
+      })
+    );
+  }
+
   //Effects
   useEffect(init, [measure, osmd]);
   useEffect(fileQueueHandler, [fileQueue.length, loading, measure, processNextFile]);
@@ -101,7 +127,23 @@ export default function OSMD() {
     <div ref={container} style={{width: '300px', height: '200px', backgroundColor: "white", opacity: loading ? "0" : "1"}} ></div>
 
     {!loading && (
-      <button type="button" className="bg-blue-600 px-4 pt-1 pb-0.5 rounded-md cursor-pointer" onClick={renderNextMeasure}>Next</button>
+      <div>
+        {/*Reveal container*/}
+        <div style={{height: "50px"}}>
+          <div 
+            className="transition-opacity absolute" 
+            style={{opacity: currentNotes == null ? "0" : "1"}}>
+              {currentNotes == null ? "" : currentNotes.join(", ")}
+          </div>
+          <button 
+            className="transition-opacity absolute bg-green-600 px-4 pt-1 pb-0.5 rounded-md cursor-pointer"
+            style={{opacity: currentNotes == null ? "1" : "0"}}
+            onClick={revealCurrentNotes}>
+              Reveal
+          </button>
+        </div>
+        <button type="button" className="bg-blue-600 px-4 pt-1 pb-0.5 rounded-md cursor-pointer" onClick={renderNextMeasure}>Next</button>
+      </div>
     )}
   </>
 }
