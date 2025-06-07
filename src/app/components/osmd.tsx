@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, ReactElement } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { IOSMDOptions, OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 import { createRandomFile } from '../actions/createRandomFile';
 import { Pitch, Step } from '../models/music';
@@ -106,13 +106,13 @@ export default function OSMD() {
       return;
     
     //Use native DOMParser to read the notes from the current file
-    let parser = new DOMParser();
-    let xmlDoc = parser.parseFromString(currentFile, "text/xml");
-    let notes: HTMLCollectionOf<Element> = xmlDoc.getElementsByTagName("note");
+    const parser: DOMParser = new DOMParser(),
+      xmlDoc: Document = parser.parseFromString(currentFile, "text/xml"),
+      notes: HTMLCollectionOf<Element> = xmlDoc.getElementsByTagName("note");
 
     setCurrentNotes(
       Array.from(notes).map(note => {
-        let pitch: Pitch = Pitch.fromElement(note);
+        const pitch: Pitch = Pitch.fromElement(note);
         return Step[pitch.step] + alterUnicodes[pitch.alter + 1]; 
       })
     );

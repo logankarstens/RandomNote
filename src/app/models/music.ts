@@ -78,8 +78,8 @@ export class Pitch {
   }
 
   static fromElement(note: Element): Pitch {
-    let stepStr: string, octave: number, alter: number = 0; 
-    let firstPitch = note.getElementsByTagName("pitch")[0];
+    let stepStr: string = "", octave: number = 0, alter: number = 0; 
+    const firstPitch = note.getElementsByTagName("pitch")[0];
 
     //Step
     stepStr = firstPitch.getElementsByTagName("step")[0].innerHTML;
