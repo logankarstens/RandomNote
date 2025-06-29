@@ -1,9 +1,21 @@
 //Classes
 export class Config {
   allowedKeys: number[] = new Array<number>(1).fill(0);
-  allowedClefs: Clef[] = new Array<Clef>(new Clef(Step.G, 2)/*, new Clef(Step.F, 4)*/);
+  allowedClefs: Clef[] = new Array<Clef>(new Clef(Step.G, 2));
 
   maxLedgerLines: number = 2;
+  notesPerMeasure: number = 1;
+
+  public static fromJSON(json: any): Config {
+    const result: Config = new Config();
+    result.allowedKeys = json.allowedKeys;
+    result.allowedClefs = json.allowedClefs.map(
+      (c: any) => new Clef(c.sign, c.line)
+    );
+    result.maxLedgerLines = json.maxLedgerLines;
+    result.notesPerMeasure = json.notesPerMeasure;
+    return result;
+  }
 }
 
 export class Measure {

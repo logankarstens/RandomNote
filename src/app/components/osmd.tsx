@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { IOSMDOptions, OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 import { createRandomFile } from '../actions/createRandomFile';
 import { Pitch, Step } from '../models/music';
+import ConfigEditor from './ConfigEditor';
 
 const defaultOptions: IOSMDOptions = {
   autoResize: true,
@@ -21,6 +22,7 @@ const fileQueueMaxBufferSize = 1;
 const alterUnicodes: Array<string> = ["\u266D ", "", "\u266F"]
 
 export default function OSMD() {
+  //States
   const [osmd, setOsmd] = useState<OpenSheetMusicDisplay | null>(null);
   const container = useRef<HTMLDivElement | null>(null)
   const [measure, setMeasure] = useState<number>(1);
@@ -50,6 +52,13 @@ export default function OSMD() {
     if (measure > 1 && osmd != null) {
       osmd.setOptions(getOptions(measure));
       osmd.render();
+    }
+  }
+
+  const configChangeHandler = (result: boolean) => {
+    if (result) {
+      setFileQueue([]);
+      setLoading(true);
     }
   }
 
@@ -124,9 +133,9 @@ export default function OSMD() {
   useEffect(measureHandler, [measure, processNextFile, osmd]);
 
   return <>
-    <div ref={container} style={{width: '300px', height: '200px', backgroundColor: "white", opacity: loading ? "0" : "1"}} ></div>
+    <div ref={container} style={{width: '300px', height: '200px', backgroundColor: "white", opacity: (loading && !osmd?.Sheet) ? "0" : "1"}} ></div>
 
-    {!loading && (
+    {!(loading && !osmd?.Sheet) && (
       <div>
         {/*Reveal container*/}
         <div style={{height: "50px"}}>
@@ -137,7 +146,7 @@ export default function OSMD() {
           </div>
           <button 
             className="transition-opacity absolute bg-green-600 px-4 pt-1 pb-0.5 rounded-md cursor-pointer"
-            style={{opacity: currentNotes == null ? "1" : "0"}}
+            style={{ opacity: currentNotes == null ? "1" : "0"}}
             onClick={revealCurrentNotes}>
               Reveal
           </button>
@@ -145,5 +154,6 @@ export default function OSMD() {
         <button type="button" className="bg-blue-600 px-4 pt-1 pb-0.5 rounded-md cursor-pointer" onClick={renderNextMeasure}>Next</button>
       </div>
     )}
+    <ConfigEditor onChange={configChangeHandler} />
   </>
 }

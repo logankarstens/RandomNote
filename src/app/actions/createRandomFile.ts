@@ -4,13 +4,16 @@ import * as Music from "../models/music";
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { loadConfig } from "./loadSaveConfig";
 
 export async function createRandomFile(numNotes: number): Promise<string | null>  {
   //Load template
   let result = await fs.readFile(path.join(process.cwd(), 'src', 'assets', 'template.xml'), 'utf8');
 
   //Load config
-  const config: Music.Config = new Music.Config();
+  const config: Music.Config | null = await loadConfig();
+  if (config == null)
+      return null;
 
   //Create & serialize measures
   const serializedMeasures: string[] = [];
@@ -22,7 +25,7 @@ export async function createRandomFile(numNotes: number): Promise<string | null>
     measure.clef = config.allowedClefs[getRandomInt(0, config.allowedClefs.length - 1)];
         
     //Randomize notes
-    for (let j = 0; j < 1; j++) { //TODO: config # notes/measure
+    for (let j = 0; j < config.notesPerMeasure; j++) {
       const minPitch: Music.Pitch | null = Music.getClefMinPitch(measure.clef, config.maxLedgerLines),
         maxPitch: Music.Pitch | null = Music.getClefMaxPitch(measure.clef, config.maxLedgerLines);
 
